@@ -1,0 +1,556 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns:validation="http://www.mulesoft.org/schema/mule/validation" 
+	xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" 
+	xmlns:metadata="http://www.mulesoft.org/schema/mule/metadata" 
+	xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw" 
+	xmlns:db="http://www.mulesoft.org/schema/mule/db" 
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" 
+	xmlns="http://www.mulesoft.org/schema/mule/core" 
+	xmlns:apikit="http://www.mulesoft.org/schema/mule/apikit" 
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" 
+	xmlns:spring="http://www.springframework.org/schema/beans" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/apikit http://www.mulesoft.org/schema/mule/apikit/current/mule-apikit.xsd
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/dw.xsd
+http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd
+http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd">
+    <flow name="post:/stores:application/json:api-config">
+        <set-property propertyName="Content-Type" value="application/json" doc:name="application/json"/>
+        <dw:transform-message doc:name="save input">
+            <dw:set-variable variableName="input"><![CDATA[%dw 1.0
+%output application/java
+---
+payload]]></dw:set-variable>
+        </dw:transform-message>
+        <set-variable variableName="storeId" value="#[java.util.UUID.randomUUID().toString()]" doc:name="generate ID"/>
+        <dw:transform-message doc:name="prepare for INSERT">
+            <dw:set-payload><![CDATA[%dw 1.0
+%output application/java
+---
+{
+	storeId:      flowVars.storeId,
+	name:         payload.name,
+	description:  payload.description,
+	notes:        payload.description,
+	addressLine1: payload.address.streetLine1,
+	addressLine2: payload.address.streetLine2,
+	city:         payload.address.city,
+	state:        payload.address.state,
+	zipCode:      payload.address.zipCode,
+	country:      payload.address.country,
+	lat:          payload.geo.latitude,
+	lng:          payload.geo.longitude,
+	email:        payload.contact.email,
+	phone:        payload.contact.phone,
+	openingHours: payload.openingHours
+}]]></dw:set-payload>
+        </dw:transform-message>
+        <db:insert config-ref="mysql" doc:name="INSERT store">
+            <db:parameterized-query><![CDATA[INSERT INTO Store
+(storeId,
+name,
+description,
+notes,
+openingHours,
+email,
+phone,
+addressLine1,
+addressLine2,
+city,
+state,
+zipCode,
+country,
+lat,
+lng)
+VALUES
+(#[payload.storeId],
+#[payload.name],
+#[payload.description],
+#[payload.notes],
+#[payload.openingHours],
+#[payload.email],
+#[payload.phone],
+#[payload.addressLine1],
+#[payload.addressLine2],
+#[payload.city],
+#[payload.state],
+#[payload.zipCode],
+#[payload.country],
+#[payload.lat],
+#[payload.lng]);]]></db:parameterized-query>
+        </db:insert>
+        <dw:transform-message doc:name="show created resource">
+            <dw:set-payload><![CDATA[%dw 1.0
+%output application/json
+---
+{id: flowVars.storeId} ++ flowVars.input]]></dw:set-payload>
+            <dw:set-property propertyName="Location"><![CDATA[%dw 1.0
+%output application/java
+---
+"$(inboundProperties.'http.scheme')://" ++
+inboundProperties.host ++ inboundProperties."http.relative.path" ++ 
+"/$(flowVars.storeId)"]]></dw:set-property>
+        </dw:transform-message>
+    </flow>
+    
+    <flow name="put:/stores/{storeId}:application/json:api-config">
+        <dw:transform-message doc:name="save input">
+            <dw:set-variable variableName="input"><![CDATA[%dw 1.0
+%output application/java
+---
+payload]]></dw:set-variable>
+        </dw:transform-message>
+        <dw:transform-message doc:name="prepare for UPDATE">
+            <dw:set-payload><![CDATA[%dw 1.0
+%output application/java
+---
+using (store = flowVars.input)
+{
+	name:         store.name,
+	description:  store.description,
+	notes:        store.description,
+	openingHours: store.openingHours,
+	email:        store.contact.email,
+	phone:        store.contact.phone,
+
+	addressLine1: store.address.streetLine1,
+	addressLine2: store.address.streetLine2,
+	city:         store.address.city,
+	state:        store.address.state,
+	zipCode:      store.address.zipCode,
+	country:      store.address.country,
+	
+	lat:          store.geo.latitude,
+	lng:          store.geo.longitude
+}]]></dw:set-payload>
+        </dw:transform-message>
+        <db:update config-ref="mysql" doc:name="UPDATE store">
+            <db:parameterized-query><![CDATA[UPDATE Store SET 
+
+name = #[payload.name],
+description = #[payload.description],
+notes = #[payload.notes],
+openingHours = #[payload.openingHours],
+email = #[payload.email],
+phone = #[payload.phone],
+addressLine1 = #[payload.addressLine1],
+addressLine2 = #[payload.addressLine2],
+city = #[payload.city],
+zipCode = #[payload.zipCode],
+state = #[payload.state],
+country = #[payload.country],
+lat = #[payload.lat],
+lng = #[payload.lng]
+
+WHERE storeId = #[flowVars.storeId];]]></db:parameterized-query>
+        </db:update>
+        <choice doc:name="Store found and updated?">
+            <when expression="#[payload == 1]">
+                <dw:transform-message doc:name="show new representation">
+                    <dw:set-payload><![CDATA[%dw 1.0
+%output application/json
+---
+flowVars.input]]></dw:set-payload>
+                </dw:transform-message>
+            </when>
+            <otherwise>
+                <dw:transform-message doc:name="404 Not Found">
+                    <dw:set-payload><![CDATA[%dw 1.0
+%output application/json
+---
+{
+	"message": "Resource not found!"
+}]]></dw:set-payload>
+                    <dw:set-property propertyName="http.status"><![CDATA[%dw 1.0
+%output application/java
+---
+404]]></dw:set-property>
+                </dw:transform-message>
+            </otherwise>
+        </choice>
+    </flow>
+    <flow name="get:/stores/{storeId}:api-config">
+        <db:select config-ref="mysql" doc:name="SELECT store by Id">
+            <db:parameterized-query><![CDATA[SELECT * FROM Store WHERE storeId = #[flowVars.storeId]]]></db:parameterized-query>
+        </db:select>
+        <dw:transform-message doc:name="Transform to JSON map">
+            <dw:input-payload mimeType="application/java"/>
+            <dw:set-payload><![CDATA[%dw 1.0
+%output application/json
+---
+using(store = payload[0])
+{
+	storeId: store.storeId,
+	name: store.name,
+	description: store.description,
+	notes: store.notes,
+	openingHours: store.openingHours,
+	address: {
+		streetLine1: store.addressLine1,
+		streetLine2: store.addressLine2,
+		city: store.city,
+		zipCode: store.zipCode,
+		state: store.state,
+		country: store.country
+	},
+	contact: {
+		email: store.email,
+		phone: store.phone
+	},
+	geo: {
+		latitude: store.lat,
+		longitude: store.lng
+	}
+}]]></dw:set-payload>
+        </dw:transform-message>
+    </flow>
+    <flow name="get:/stores:api-config">
+        <dw:transform-message doc:name="save search criteria to var query">
+            <dw:set-variable variableName="query"><![CDATA[%dw 1.0
+%output application/java
+---
+inboundProperties."http.query.params"]]></dw:set-variable>
+        </dw:transform-message>
+        <logger message="#[flowVars.query]" level="INFO" doc:name="Logger"/>
+        <choice doc:name="Search type">
+            <when expression="#[flowVars.query.zip != null]">
+                <db:select config-ref="mysql" doc:name="SELECT by zipCode">
+                    <db:parameterized-query><![CDATA[SELECT * FROM Store WHERE zipCode = #[flowVars.query.zip];]]></db:parameterized-query>
+                </db:select>
+                <logger message="#[payload]" level="INFO" doc:name="Logger"/>
+                <dw:transform-message doc:name="Transform to JSON array">
+                    <dw:set-payload><![CDATA[%dw 1.0
+%output application/json
+---
+{
+	searchCriteria: {
+	  	latitude: flowVars.query.latitude as :number default null,
+		longitude: flowVars.query.longitude as :number default null,
+		radius: flowVars.query.radius as :number,
+		useMetric: flowVars.query.metric as :boolean
+	},
+	results: payload map ( (store) ->
+		{
+			storeId: store.storeId,
+			name: store.name,
+			description: store.description,
+			notes: store.notes,
+			openingHours: store.openingHours,
+			address: {
+				streetLine1: store.addressLine1,
+				streetLine2: store.addressLine2,
+				city: store.city,
+				zipCode: store.zipCode,
+				state: store.state,
+				country: store.country
+			},
+			contact: {
+				email: store.email,
+				phone: store.phone
+			},
+			geo: {
+				latitude: store.lat,
+				longitude: store.lng
+			}
+		}
+	)
+}
+]]></dw:set-payload>
+                </dw:transform-message>
+                <logger message="#[message.payloadAs(java.lang.String)]" level="INFO" doc:name="Logger"/>
+            </when>
+            <when expression="#[flowVars.query.latitude != null &amp;&amp; flowVars.query.longitude != null &amp;&amp; flowVars.query.radius != null]">
+                <logger message="flowVars.query.metric = #[flowVars.query.metric]" level="INFO" doc:name="Logger"/>
+                <db:select config-ref="mysql" doc:name="SELECT by location">
+                    <db:parameterized-query><![CDATA[SELECT *, 
+( IF(#[flowVars.query.metric] = 'true', 6371, 3959) * acos( cos( radians(#[flowVars.query.latitude]) ) * cos( radians( lat ) ) * cos( radians( lng ) - radians(#[flowVars.query.longitude]) ) + sin( radians(#[flowVars.query.latitude]) ) * sin( radians( lat ) ) ) ) AS distance
+FROM Store 
+HAVING distance < #[flowVars.query.radius] 
+ORDER BY distance 
+LIMIT 30;]]></db:parameterized-query>
+                </db:select>
+                <logger level="INFO" doc:name="Logger"/>
+                <dw:transform-message doc:name="Transform to JSON array">
+                    <dw:set-payload><![CDATA[%dw 1.0
+%output application/json
+---
+{
+	searchCriteria: {
+	  	latitude: flowVars.query.latitude as :number,
+		longitude: flowVars.query.longitude as :number,
+		radius: flowVars.query.radius as :number,
+		useMetric: flowVars.query.metric as :boolean
+	},
+	results: payload map ( (store) ->
+		{
+			storeId: store.storeId,
+			name: store.name,
+			description: store.description,
+			notes: store.notes,
+			openingHours: store.openingHours,
+			address: {
+				streetLine1: store.addressLine1,
+				streetLine2: store.addressLine2,
+				city: store.city,
+				zipCode: store.zipCode,
+				state: store.state,
+				country: store.country
+			},
+			contact: {
+				email: store.email,
+				phone: store.phone
+			},
+			geo: {
+				latitude: store.lat,
+				longitude: store.lng
+			},
+			distance: store.distance,
+			distanceUnit: 'km' when flowVars.query.metric == 'true' otherwise 'mi'
+			
+		}
+	)
+}
+]]></dw:set-payload>
+                </dw:transform-message>
+                <logger level="INFO" doc:name="Logger"/>
+            </when>
+            <otherwise>
+                <logger level="INFO" doc:name="Logger"/>
+                <db:select config-ref="mysql" doc:name="SELECT without criteria">
+                    <db:parameterized-query><![CDATA[SELECT * FROM Store;]]></db:parameterized-query>
+                </db:select>
+                <dw:transform-message doc:name="Transform to JSON array">
+                    <dw:set-payload><![CDATA[%dw 1.0
+%output application/json
+---
+{
+	searchCriteria: {
+	  	latitude: flowVars.query.latitude as :number default null,
+		longitude: flowVars.query.longitude as :number default null,
+		radius: flowVars.query.radius as :number,
+		useMetric: flowVars.query.metric as :boolean
+	},
+	results: payload map ( (store) ->
+		{
+			storeId: store.storeId,
+			name: store.name,
+			description: store.description,
+			notes: store.notes,
+			openingHours: store.openingHours,
+			address: {
+				streetLine1: store.addressLine1,
+				streetLine2: store.addressLine2,
+				city: store.city,
+				zipCode: store.zipCode,
+				state: store.state,
+				country: store.country
+			},
+			contact: {
+				email: store.email,
+				phone: store.phone
+			},
+			geo: {
+				latitude: store.lat,
+				longitude: store.lng
+			}
+		}
+	)
+}
+	]]></dw:set-payload>
+                </dw:transform-message>
+            </otherwise>
+        </choice>
+    </flow>
+    <flow name="get:/productLocator:api-config">
+        <dw:transform-message doc:name="save search criteria to var query">
+            <dw:set-variable variableName="query"><![CDATA[%dw 1.0
+%output application/java
+---
+inboundProperties."http.query.params"]]></dw:set-variable>
+        </dw:transform-message>
+        <logger level="INFO" doc:name="Logger"/>
+        <choice doc:name="Location used?">
+            <when expression="#[flowVars.query.latitude != null &amp;&amp; flowVars.query.longitude != null &amp;&amp; flowVars.query.radius != null &amp;&amp; flowVars.query.metric != null]">
+                <logger message="SELECT by location" level="INFO" doc:name="Logger"/>
+                <db:select config-ref="mysql" doc:name="SELECT stores by location, productId, variantId and quantity">
+                    <db:parameterized-query><![CDATA[SELECT s.*, sp.availableCount,
+( IF(#[flowVars.query.metric] = 'true', 6371, 3959) * acos( cos( radians(#[flowVars.query.latitude]) ) * cos( radians( lat ) ) * cos( radians( lng ) - radians(#[flowVars.query.longitude]) ) + sin( radians(#[flowVars.query.latitude]) ) * sin( radians( lat ) ) ) ) AS distance
+FROM Store as s 
+	INNER JOIN Store_Product as sp ON (s.storeId=sp.Store_storeId) 
+	INNER JOIN Product as p ON (sp.Product_productId=p.productId AND sp.Product_variantId=p.variantId)
+WHERE p.productId = #[flowVars.query.productId] 
+	AND p.variantId = #[flowVars.query.variantId] 
+	AND sp.availableCount >= #[flowVars.query.quantity]
+HAVING distance < #[flowVars.query.radius]
+ORDER BY distance 
+LIMIT 30;]]></db:parameterized-query>
+                </db:select>
+                <logger message="#[payload]" level="INFO" doc:name="Logger"/>
+                <dw:transform-message doc:name="Transform to JSON array">
+                    <dw:set-payload><![CDATA[%dw 1.0
+%output application/json
+---
+{
+	searchCriteria: {
+		latitude: flowVars.query.latitude as :number default null,
+		longitude: flowVars.query.longitude as :number default null,
+		productId: flowVars.query.productId,
+		productVariant: flowVars.query.variantId,
+		quantity: flowVars.query.quantity as :number,
+		radius: flowVars.query.radius as :number,
+		useMetric: flowVars.query.metric as :boolean
+	},
+	results: payload map ( (store) ->
+		{
+			quantityInStock: store.availableCount,
+			storeInfo: {
+				storeId: store.storeId,
+				name: store.name,
+				description: store.description,
+				notes: store.notes,
+				openingHours: store.openingHours,
+				address: {
+					streetLine1: store.addressLine1,
+					streetLine2: store.addressLine2,
+					city: store.city,
+					zipCode: store.zipCode,
+					state: store.state,
+					country: store.country
+				},
+				contact: {
+					email: store.email,
+					phone: store.phone
+				},
+				geo: {
+					latitude: store.lat,
+					longitude: store.lng
+				},
+				distance: store.distance,
+				distanceUnit: 'km' when flowVars.query.metric == 'true' otherwise 'mi'
+			}
+		}
+	)
+}
+
+
+
+
+]]></dw:set-payload>
+                </dw:transform-message>
+            </when>
+            <otherwise>
+                <db:select config-ref="mysql" doc:name="SELECT by productId, variantId and quantity only">
+                    <db:parameterized-query><![CDATA[SELECT s.*, sp.availableCount
+FROM Store as s 
+	INNER JOIN Store_Product as sp ON (s.storeId=sp.Store_storeId) 
+	INNER JOIN Product as p ON (sp.Product_productId=p.productId AND sp.Product_variantId = p.variantId)
+WHERE p.productId = #[flowVars.query.productId]  
+	AND p.variantId = #[flowVars.query.variantId] 
+	AND sp.availableCount >= #[flowVars.query.quantity]
+LIMIT 100;]]></db:parameterized-query>
+                </db:select>
+                <logger message="#[payload]" level="INFO" doc:name="Logger"/>
+                <dw:transform-message doc:name="Transform to JSON array">
+                    <dw:set-payload><![CDATA[%dw 1.0
+%output application/json
+---
+{
+	searchCriteria: {
+		latitude: flowVars.query.latitude as :number default null,
+		longitude: flowVars.query.longitude as :number default null,
+		productId: flowVars.query.productId,
+		productVariant: flowVars.query.variantId,
+		quantity: flowVars.query.quantity as :number,
+		radius: flowVars.query.radius as :number,
+		useMetric: flowVars.query.metric as :boolean
+	},
+	results: payload map ( (store) ->
+		{
+			quantityInStock: store.availableCount,
+			storeInfo: {
+				storeId: store.storeId,
+				name: store.name,
+				description: store.description,
+				notes: store.notes,
+				openingHours: store.openingHours,
+				address: {
+					streetLine1: store.addressLine1,
+					streetLine2: store.addressLine2,
+					city: store.city,
+					zipCode: store.zipCode,
+					state: store.state,
+					country: store.country
+				},
+				contact: {
+					email: store.email,
+					phone: store.phone
+				},
+				geo: {
+					latitude: store.lat,
+					longitude: store.lng
+				}
+			}
+		}
+	)
+}
+
+
+
+
+]]></dw:set-payload>
+                </dw:transform-message>
+            </otherwise>
+        </choice>
+    </flow>
+    <flow name="post:/reservation:api-config">
+        <dw:transform-message doc:name="save to var input">
+            <dw:set-variable variableName="input"><![CDATA[%dw 1.0
+%output application/java
+---
+payload]]></dw:set-variable>
+        </dw:transform-message>
+        <set-variable variableName="reservationId" value="#[java.util.UUID.randomUUID().toString()]" doc:name="generate ID"/>
+        <transactional action="ALWAYS_BEGIN" doc:name="Transactional">
+            <db:insert config-ref="mysql" doc:name="Add New Reservation">
+                <db:parameterized-query><![CDATA[INSERT INTO Reservation
+(reservationId,
+customerId,
+createdAt,
+updatedAt,
+quantity,
+Store_storeId,
+Product_productId,
+Product_variantId)
+VALUES
+(#[flowVars.reservationId],
+#[flowVars.input.customerId],
+CURRENT_TIMESTAMP,
+CURRENT_TIMESTAMP,
+#[flowVars.input.quantity],
+#[flowVars.input.storeId],
+#[flowVars.input.productId],
+#[flowVars.input.variantId]);]]></db:parameterized-query>
+            </db:insert>
+            <db:update config-ref="mysql" doc:name="Update count for particular store">
+                <db:parameterized-query><![CDATA[UPDATE Store_Product
+SET availableCount = availableCount - #[flowVars.input.quantity]
+WHERE Store_storeId = #[flowVars.input.storeId] AND 
+Product_productId = #[flowVars.input.productId] AND 
+Product_variantId = #[flowVars.input.variantId];]]></db:parameterized-query>
+            </db:update>
+        </transactional>
+        <dw:transform-message doc:name="Transform Message">
+            <dw:set-payload><![CDATA[%dw 1.0
+%output application/java
+---
+{
+	message: "Reservation created"
+}]]></dw:set-payload>
+        </dw:transform-message>
+    </flow>
+    
+</mule>
