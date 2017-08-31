@@ -1,4 +1,4 @@
-CREATE DATABASE `retail_locations` /*!40100 DEFAULT CHARACTER SET utf8 */;
+CREATE DATABASE `retail_locations`;
 USE `retail_locations`;
 
 CREATE TABLE IF NOT EXISTS `Store` (
@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS `Store` (
   `lat` float(10,6) NOT NULL,
   `lng` float(10,6) NOT NULL,
   PRIMARY KEY (`storeId`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 COMMENT='street2';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
 CREATE TABLE IF NOT EXISTS `Product` (
@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS `Product` (
   `size` varchar(45) NOT NULL,
   `color` varchar(45) NOT NULL,
   PRIMARY KEY (`productId`,`variantId`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
 CREATE TABLE IF NOT EXISTS `Store_Product` (
@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS `Store_Product` (
   KEY `fk_Stores_has_Products_Stores_idx` (`Store_storeId`),
   CONSTRAINT `fk_Stores_has_Products_Products1` FOREIGN KEY (`Product_productId`, `Product_variantId`) REFERENCES `Product` (`productId`, `variantId`) ON DELETE NO ACTION ON UPDATE NO ACTION,
   CONSTRAINT `fk_Stores_has_Products_Stores` FOREIGN KEY (`Store_storeId`) REFERENCES `Store` (`storeId`) ON DELETE NO ACTION ON UPDATE NO ACTION
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE IF NOT EXISTS `Reservation` (
   `reservationId` VARCHAR(45) NOT NULL,
@@ -65,4 +65,4 @@ CREATE TABLE IF NOT EXISTS `Reservation` (
     REFERENCES `Product` (`productId` , `variantId`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
-ENGINE = InnoDB DEFAULT CHARSET=latin1
+ENGINE = InnoDB DEFAULT CHARSET=utf8

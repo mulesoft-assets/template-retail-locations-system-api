@@ -263,7 +263,7 @@ inboundProperties."http.query.params"]]></dw:set-variable>
             <when expression="#[flowVars.query.latitude != null &amp;&amp; flowVars.query.longitude != null &amp;&amp; flowVars.query.radius != null]">
                 <db:select config-ref="mysql" doc:name="SELECT by location">
                     <db:parameterized-query><![CDATA[SELECT *, 
-( IF(#[flowVars.query.metric] = 'true', 6371, 3959) * acos( cos( radians(#[flowVars.query.latitude]) ) * cos( radians( lat ) ) * cos( radians( lng ) - radians(#[flowVars.query.longitude]) ) + sin( radians(#[flowVars.query.latitude]) ) * sin( radians( lat ) ) ) ) AS distance
+( IF(#[flowVars.query.metric] = 'true', 6371, 3959) * acos( cos( radians(#[flowVars.query.latitude]) ) * cos( radians( #[flowVars.query.latitude] ) ) * cos( radians( #[flowVars.query.longitude] ) - radians(#[flowVars.query.longitude]) ) + sin( radians(#[flowVars.query.latitude]) ) * sin( radians( #[flowVars.query.latitude] ) ) ) ) AS distance
 FROM Store 
 HAVING distance < #[flowVars.query.radius] 
 ORDER BY distance 
@@ -432,7 +432,7 @@ LIMIT 100;]]></db:parameterized-query>
             <when expression="#[flowVars.query.latitude != null &amp;&amp; flowVars.query.longitude != null &amp;&amp; flowVars.query.radius != null &amp;&amp; flowVars.query.metric != null]">
                 <db:select config-ref="mysql" doc:name="SELECT stores by location, productId, variantId and quantity">
                     <db:parameterized-query><![CDATA[SELECT s.*, sp.availableCount,
-( IF(#[flowVars.query.metric] = 'true', 6371, 3959) * acos( cos( radians(#[flowVars.query.latitude]) ) * cos( radians( lat ) ) * cos( radians( lng ) - radians(#[flowVars.query.longitude]) ) + sin( radians(#[flowVars.query.latitude]) ) * sin( radians( lat ) ) ) ) AS distance
+( IF(#[flowVars.query.metric] = 'true', 6371, 3959) * acos( cos( radians(#[flowVars.query.latitude]) ) * cos( radians( #[flowVars.query.latitude] ) ) * cos( radians( #[flowVars.query.longitude] ) - radians(#[flowVars.query.longitude]) ) + sin( radians(#[flowVars.query.latitude]) ) * sin( radians( #[flowVars.query.latitude] ) ) ) ) AS distance
 FROM Store as s 
 	INNER JOIN Store_Product as sp ON (s.storeId=sp.Store_storeId) 
 	INNER JOIN Product as p ON (sp.Product_productId=p.productId AND sp.Product_variantId=p.variantId)
