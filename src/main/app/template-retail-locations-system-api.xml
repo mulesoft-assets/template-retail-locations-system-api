@@ -221,7 +221,7 @@ inboundProperties."http.query.params"]]></dw:set-variable>
                 <db:select config-ref="mysql" doc:name="SELECT by zipCode">
                     <db:parameterized-query><![CDATA[SELECT * FROM Store WHERE zipCode = #[flowVars.query.zip];]]></db:parameterized-query>
                 </db:select>
-                <logger message="#[payload]" level="INFO" doc:name="Logger"/>
+
                 <dw:transform-message doc:name="Transform to JSON array">
                     <dw:set-payload><![CDATA[%dw 1.0
 %output application/json
@@ -261,7 +261,7 @@ inboundProperties."http.query.params"]]></dw:set-variable>
 }
 ]]></dw:set-payload>
                 </dw:transform-message>
-                <logger message="#[message.payloadAs(java.lang.String)]" level="INFO" doc:name="Logger"/>
+
             </when>
             <when expression="#[flowVars.query.latitude != null &amp;&amp; flowVars.query.longitude != null &amp;&amp; flowVars.query.radius != null]">
                 <logger message="flowVars.query.metric = #[flowVars.query.metric]" level="INFO" doc:name="Logger"/>
@@ -273,7 +273,7 @@ HAVING distance < #[flowVars.query.radius]
 ORDER BY distance 
 LIMIT 30;]]></db:parameterized-query>
                 </db:select>
-                <logger level="INFO" doc:name="Logger"/>
+
                 <dw:transform-message doc:name="Transform to JSON array">
                     <dw:set-payload><![CDATA[%dw 1.0
 %output application/json
@@ -316,10 +316,10 @@ LIMIT 30;]]></db:parameterized-query>
 }
 ]]></dw:set-payload>
                 </dw:transform-message>
-                <logger level="INFO" doc:name="Logger"/>
+
             </when>
             <otherwise>
-                <logger level="INFO" doc:name="Logger"/>
+
                 <db:select config-ref="mysql" doc:name="SELECT without criteria">
                     <db:parameterized-query><![CDATA[SELECT * FROM Store;]]></db:parameterized-query>
                 </db:select>
@@ -372,10 +372,10 @@ LIMIT 30;]]></db:parameterized-query>
 ---
 inboundProperties."http.query.params"]]></dw:set-variable>
         </dw:transform-message>
-        <logger level="INFO" doc:name="Logger"/>
+
         <choice doc:name="Location used?">
             <when expression="#[flowVars.query.latitude != null &amp;&amp; flowVars.query.longitude != null &amp;&amp; flowVars.query.radius != null &amp;&amp; flowVars.query.metric != null]">
-                <logger message="SELECT by location" level="INFO" doc:name="Logger"/>
+
                 <db:select config-ref="mysql" doc:name="SELECT stores by location, productId, variantId and quantity">
                     <db:parameterized-query><![CDATA[SELECT s.*, sp.availableCount,
 ( IF(#[flowVars.query.metric] = 'true', 6371, 3959) * acos( cos( radians(#[flowVars.query.latitude]) ) * cos( radians( lat ) ) * cos( radians( lng ) - radians(#[flowVars.query.longitude]) ) + sin( radians(#[flowVars.query.latitude]) ) * sin( radians( lat ) ) ) ) AS distance
@@ -389,7 +389,7 @@ HAVING distance < #[flowVars.query.radius]
 ORDER BY distance 
 LIMIT 30;]]></db:parameterized-query>
                 </db:select>
-                <logger message="#[payload]" level="INFO" doc:name="Logger"/>
+
                 <dw:transform-message doc:name="Transform to JSON array">
                     <dw:set-payload><![CDATA[%dw 1.0
 %output application/json
@@ -453,7 +453,7 @@ WHERE p.productId = #[flowVars.query.productId]
 	AND sp.availableCount >= #[flowVars.query.quantity]
 LIMIT 100;]]></db:parameterized-query>
                 </db:select>
-                <logger message="#[payload]" level="INFO" doc:name="Logger"/>
+
                 <dw:transform-message doc:name="Transform to JSON array">
                     <dw:set-payload><![CDATA[%dw 1.0
 %output application/json
