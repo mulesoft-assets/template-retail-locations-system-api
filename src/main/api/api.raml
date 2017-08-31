@@ -68,6 +68,7 @@ types:
       radius: integer
       useMetric: boolean
       maxResults?: integer
+      zipcode?: string?
       
   StoreSearchResponse:
     type: object
@@ -154,6 +155,10 @@ types:
       Searches for a product identified by productId and variantId. If quantity is provided as search parameter, only stores that have required number of items in stock are included in the response. Filtering by location coordinates and maximum radius can be used to further filter the search results.
     is: [ geoSearch, productSearch ]
     queryParameters: 
+      zipcode:
+        type: string
+        required: false
+        description: Narrow down the search to include only stores in particular zipcode.
     responses: 
       200:
         body: 

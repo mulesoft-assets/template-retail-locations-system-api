@@ -215,13 +215,11 @@ using(store = payload[0])
 ---
 inboundProperties."http.query.params"]]></dw:set-variable>
         </dw:transform-message>
-        <logger message="#[flowVars.query]" level="INFO" doc:name="Logger"/>
         <choice doc:name="Search type">
             <when expression="#[flowVars.query.zip != null]">
                 <db:select config-ref="mysql" doc:name="SELECT by zipCode">
                     <db:parameterized-query><![CDATA[SELECT * FROM Store WHERE zipCode = #[flowVars.query.zip];]]></db:parameterized-query>
                 </db:select>
-
                 <dw:transform-message doc:name="Transform to JSON array">
                     <dw:set-payload><![CDATA[%dw 1.0
 %output application/json
@@ -261,10 +259,8 @@ inboundProperties."http.query.params"]]></dw:set-variable>
 }
 ]]></dw:set-payload>
                 </dw:transform-message>
-
             </when>
             <when expression="#[flowVars.query.latitude != null &amp;&amp; flowVars.query.longitude != null &amp;&amp; flowVars.query.radius != null]">
-                <logger message="flowVars.query.metric = #[flowVars.query.metric]" level="INFO" doc:name="Logger"/>
                 <db:select config-ref="mysql" doc:name="SELECT by location">
                     <db:parameterized-query><![CDATA[SELECT *, 
 ( IF(#[flowVars.query.metric] = 'true', 6371, 3959) * acos( cos( radians(#[flowVars.query.latitude]) ) * cos( radians( lat ) ) * cos( radians( lng ) - radians(#[flowVars.query.longitude]) ) + sin( radians(#[flowVars.query.latitude]) ) * sin( radians( lat ) ) ) ) AS distance
@@ -273,7 +269,6 @@ HAVING distance < #[flowVars.query.radius]
 ORDER BY distance 
 LIMIT 30;]]></db:parameterized-query>
                 </db:select>
-
                 <dw:transform-message doc:name="Transform to JSON array">
                     <dw:set-payload><![CDATA[%dw 1.0
 %output application/json
@@ -316,10 +311,8 @@ LIMIT 30;]]></db:parameterized-query>
 }
 ]]></dw:set-payload>
                 </dw:transform-message>
-
             </when>
             <otherwise>
-
                 <db:select config-ref="mysql" doc:name="SELECT without criteria">
                     <db:parameterized-query><![CDATA[SELECT * FROM Store;]]></db:parameterized-query>
                 </db:select>
@@ -372,10 +365,71 @@ LIMIT 30;]]></db:parameterized-query>
 ---
 inboundProperties."http.query.params"]]></dw:set-variable>
         </dw:transform-message>
+        <choice doc:name="Search type">
+        	<when expression="#[flowVars.query.zipcode != null]">
+                <db:select config-ref="mysql" doc:name="SELECT stores by zipcode, productId, variantId and quantity">
+                    <db:parameterized-query><![CDATA[SELECT s.*, sp.availableCount
+FROM Store as s 
+	INNER JOIN Store_Product as sp ON (s.storeId=sp.Store_storeId) 
+	INNER JOIN Product as p ON (sp.Product_productId=p.productId AND sp.Product_variantId = p.variantId)
+WHERE p.productId = #[flowVars.query.productId]  
+	AND p.variantId = #[flowVars.query.variantId] 
+	AND sp.availableCount >= #[flowVars.query.quantity]
+    AND s.zipCode = #[flowVars.query.zipcode]
+LIMIT 100;]]></db:parameterized-query>
+                </db:select>
+                <dw:transform-message doc:name="Transform to JSON array">
+                    <dw:set-payload><![CDATA[%dw 1.0
+%output application/json
+---
+{
+	searchCriteria: {
+		latitude: flowVars.query.latitude as :number default null,
+		longitude: flowVars.query.longitude as :number default null,
+		productId: flowVars.query.productId,
+		productVariant: flowVars.query.variantId,
+		quantity: flowVars.query.quantity as :number,
+		radius: flowVars.query.radius as :number,
+		useMetric: flowVars.query.metric as :boolean,
+		zipcode: flowVars.query.zipcode
+	},
+	results: payload map ( (store) ->
+		{
+			quantityInStock: store.availableCount,
+			storeInfo: {
+				storeId: store.storeId,
+				name: store.name,
+				description: store.description,
+				notes: store.notes,
+				openingHours: store.openingHours,
+				address: {
+					streetLine1: store.addressLine1,
+					streetLine2: store.addressLine2,
+					city: store.city,
+					zipCode: store.zipCode,
+					state: store.state,
+					country: store.country
+				},
+				contact: {
+					email: store.email,
+					phone: store.phone
+				},
+				geo: {
+					latitude: store.lat,
+					longitude: store.lng
+				}
+			}
+		}
+	)
+}
 
-        <choice doc:name="Location used?">
+
+
+
+]]></dw:set-payload>
+                </dw:transform-message>
+            </when>
             <when expression="#[flowVars.query.latitude != null &amp;&amp; flowVars.query.longitude != null &amp;&amp; flowVars.query.radius != null &amp;&amp; flowVars.query.metric != null]">
-
                 <db:select config-ref="mysql" doc:name="SELECT stores by location, productId, variantId and quantity">
                     <db:parameterized-query><![CDATA[SELECT s.*, sp.availableCount,
 ( IF(#[flowVars.query.metric] = 'true', 6371, 3959) * acos( cos( radians(#[flowVars.query.latitude]) ) * cos( radians( lat ) ) * cos( radians( lng ) - radians(#[flowVars.query.longitude]) ) + sin( radians(#[flowVars.query.latitude]) ) * sin( radians( lat ) ) ) ) AS distance
@@ -389,7 +443,6 @@ HAVING distance < #[flowVars.query.radius]
 ORDER BY distance 
 LIMIT 30;]]></db:parameterized-query>
                 </db:select>
-
                 <dw:transform-message doc:name="Transform to JSON array">
                     <dw:set-payload><![CDATA[%dw 1.0
 %output application/json
@@ -402,7 +455,8 @@ LIMIT 30;]]></db:parameterized-query>
 		productVariant: flowVars.query.variantId,
 		quantity: flowVars.query.quantity as :number,
 		radius: flowVars.query.radius as :number,
-		useMetric: flowVars.query.metric as :boolean
+		useMetric: flowVars.query.metric as :boolean,
+		zipcode: flowVars.query.zipcode
 	},
 	results: payload map ( (store) ->
 		{
@@ -442,6 +496,7 @@ LIMIT 30;]]></db:parameterized-query>
 ]]></dw:set-payload>
                 </dw:transform-message>
             </when>
+            
             <otherwise>
                 <db:select config-ref="mysql" doc:name="SELECT by productId, variantId and quantity only">
                     <db:parameterized-query><![CDATA[SELECT s.*, sp.availableCount
@@ -453,7 +508,6 @@ WHERE p.productId = #[flowVars.query.productId]
 	AND sp.availableCount >= #[flowVars.query.quantity]
 LIMIT 100;]]></db:parameterized-query>
                 </db:select>
-
                 <dw:transform-message doc:name="Transform to JSON array">
                     <dw:set-payload><![CDATA[%dw 1.0
 %output application/json
@@ -466,7 +520,8 @@ LIMIT 100;]]></db:parameterized-query>
 		productVariant: flowVars.query.variantId,
 		quantity: flowVars.query.quantity as :number,
 		radius: flowVars.query.radius as :number,
-		useMetric: flowVars.query.metric as :boolean
+		useMetric: flowVars.query.metric as :boolean,
+		zipcode: flowVars.query.zipcode
 	},
 	results: payload map ( (store) ->
 		{
@@ -535,13 +590,6 @@ CURRENT_TIMESTAMP,
 #[flowVars.input.productId],
 #[flowVars.input.variantId]);]]></db:parameterized-query>
             </db:insert>
-            <db:update config-ref="mysql" doc:name="Update count for particular store">
-                <db:parameterized-query><![CDATA[UPDATE Store_Product
-SET availableCount = availableCount - #[flowVars.input.quantity]
-WHERE Store_storeId = #[flowVars.input.storeId] AND 
-Product_productId = #[flowVars.input.productId] AND 
-Product_variantId = #[flowVars.input.variantId];]]></db:parameterized-query>
-            </db:update>
         </transactional>
         <dw:transform-message doc:name="Transform Message">
             <dw:set-payload><![CDATA[%dw 1.0
