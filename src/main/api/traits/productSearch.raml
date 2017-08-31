@@ -15,7 +15,8 @@ queryParameters:
     type: string
     
   quantity:
-    required: true
+    required: false
+    default: 0
     description: | 
       Quantity requested. If quantity in particular store is less than requested, the store will not show up in the results.
-    type: string
+    type: integer
