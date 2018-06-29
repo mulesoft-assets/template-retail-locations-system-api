@@ -1,0 +1,540 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd">
+	<flow name="createStore" doc:id="de0099b1-e33d-4b50-853b-736e4fb43969">
+		<ee:transform doc:name="Backup input and generate ID"
+			doc:id="a9e4ab53-e9bf-4124-843e-5efe2f581e24">
+			<ee:message>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="generatedId"><![CDATA[%dw 2.0
+output application/json
+---
+uuid()]]></ee:set-variable>
+				<ee:set-variable variableName="newStore"><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<db:insert doc:name="Insert" doc:id="018dfb8b-35b7-467a-bb31-243db6a70656"
+			config-ref="Database_Config">
+			<db:sql>INSERT INTO Store
+				(storeId,
+				name,
+				description,
+				notes,
+				openingHours,
+				email,
+				phone,
+				addressLine1,
+				city,
+				state,
+				zipCode,
+				country,
+				lat,
+				lng) VALUES (
+				:storeId,
+				:name,
+				:description,
+				:notes,
+				:openingHours,
+				:email,
+				:phone,
+				:addressLine1,
+				:city,
+				:state,
+				:zipCode,
+				:country,
+				:lat,
+				:lng)</db:sql>
+			<db:input-parameters><![CDATA[#[{
+	storeId:      vars.generatedId,
+	name:         vars.newStore.name,
+	description:  vars.newStore.description,
+	notes:        vars.newStore.description,
+	addressLine1: vars.newStore.address.address,
+	city:         vars.newStore.address.city,
+	state:        vars.newStore.address.state,
+	zipCode:      vars.newStore.address.postalCode,
+	country:      vars.newStore.address.country,
+	lat:          vars.newStore.geo.latitude,
+	lng:          vars.newStore.geo.longitude,
+	email:        vars.newStore.contact.email,
+	phone:        vars.newStore.contact.phone,
+	openingHours: vars.newStore.openingHours
+}]]]></db:input-parameters>
+		</db:insert>
+		<ee:transform doc:name="Build response"
+			doc:id="3bf886f3-5f8d-4a40-bf83-7d83d036641f">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+vars.newStore ++ {"identifier": vars.generatedId}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="updateStore" doc:id="a4268fe2-bf83-4cb4-83aa-73aa6f0cb6a1">
+		<ee:transform doc:name="Backup input"
+			doc:id="a9e4ab53-e9bf-4124-843e-5efe2f581e24">
+			<ee:message />
+			<ee:variables>
+				<ee:set-variable variableName="updatedStore"><![CDATA[%dw 2.0
+output application/json
+---
+payload ++ {storeId: attributes.uriParams.storeId}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<db:update doc:name="Update" doc:id="358f462f-6fd7-4b74-b74c-1330ed2b212e"
+			config-ref="Database_Config">
+			<db:sql>UPDATE Store SET
+				name = :name,
+				description = :description,
+				notes = :notes,
+				openingHours = :openingHours,
+				email = :email,
+				phone = :phone,
+				addressLine1 = :addressLine1,
+				city = :city,
+				state = :state,
+				zipCode = :zipCode,
+				country = :country,
+				lat = :lat,
+				lng = :lng
+				WHERE storeId = :storeId</db:sql>
+			<db:input-parameters><![CDATA[#[{
+	storeId:      vars.updatedStore.storeId,
+	name:         vars.updatedStore.name,
+	description:  vars.updatedStore.description,
+	notes:        vars.updatedStore.description,
+	addressLine1: vars.updatedStore.address.address,
+	city:         vars.updatedStore.address.city,
+	state:        vars.updatedStore.address.state,
+	zipCode:      vars.updatedStore.address.postalCode,
+	country:      vars.updatedStore.address.country,
+	lat:          vars.updatedStore.geo.latitude,
+	lng:          vars.updatedStore.geo.longitude,
+	email:        vars.updatedStore.contact.email,
+	phone:        vars.updatedStore.contact.phone,
+	openingHours: vars.updatedStore.openingHours
+}]]]></db:input-parameters>
+		</db:update>
+		<choice doc:name="Has store been updated?" doc:id="a1534b98-89f6-43d4-ad7e-a1ed807d12a1">
+			<when expression="#[payload.affectedRows == 1]">
+				<ee:transform doc:name="Build response"
+					doc:id="faf8492e-0385-493d-a092-d2c1f2389c00">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+vars.updatedStore]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+			<otherwise>
+				<ee:transform doc:name="Build resource not found response"
+					doc:id="b51d190b-b35d-4de0-98eb-24395ac0d89c">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"message": "Resource not found!"
+}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables>
+						<ee:set-variable variableName="httpStatus"><![CDATA[%dw 2.0
+output application/java
+---
+404]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+			</otherwise>
+		</choice>
+	</flow>
+	<flow name="getStoreById" doc:id="340ac5bc-4cf6-412e-b686-9d7d6a9d2d46">
+		<db:select doc:name="Select store from DB" doc:id="029c7516-67f8-4863-9271-c191c95a13e6"
+			config-ref="Database_Config">
+			<db:sql>SELECT * FROM Store WHERE storeId = :storeId</db:sql>
+			<db:input-parameters><![CDATA[#[{
+	storeId: attributes.uriParams.storeId
+}]]]></db:input-parameters>
+		</db:select>
+		<choice doc:name="Has store been found?" doc:id="461c9d36-5829-4d30-a168-d8534fafac7f">
+			<when expression="#[sizeOf(payload) == 1]">
+				<ee:transform doc:name="Build response"
+					doc:id="19b938ea-8b2c-4b2d-ac2c-2b348d3051a6">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+using(store = payload[0])
+{
+	storeId: store.storeId,
+	name: store.name,
+	description: store.description,
+	notes: store.notes,
+	openingHours: store.openingHours,
+	address: {
+		address: store.addressLine1,
+		city: store.city,
+		postalCode: store.zipCode,
+		state: store.state,
+		country: store.country
+	},
+	contact: {
+		email: store.email,
+		phone: store.phone
+	},
+	geo: {
+		latitude: store.lat,
+		longitude: store.lng
+	}
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+			<otherwise>
+				<ee:transform doc:name="Build resource not found response"
+					doc:id="c5b7755a-6270-4637-b8bb-39213d2d9b47">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"message": "Resource not found!"
+}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables>
+						<ee:set-variable variableName="httpStatus"><![CDATA[%dw 2.0
+output application/java
+---
+404]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+			</otherwise>
+		</choice>
+	</flow>
+	<flow name="getStores" doc:id="0c036f3c-ffdc-45ad-9419-429dcd4ec5f5">
+		<ee:transform doc:name="Create params var"
+			doc:id="8188166a-8409-40d2-9c7c-e661e11d4ca3">
+			<ee:message>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="params"><![CDATA[%dw 2.0
+output application/java
+---
+attributes.queryParams]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<choice doc:name="Choice by query parameters" doc:id="c82aad2e-d3d4-4d1f-bf7a-ee19f3ea9805">
+			<when expression="#[vars.params.zipcode != null]">
+				<db:select doc:name="Select by zip code" doc:id="ad2517f3-42e2-4448-a939-5e78fd06c16d"
+					config-ref="Database_Config">
+					<db:sql>SELECT * FROM Store WHERE zipCode = :zipCode</db:sql>
+					<db:input-parameters><![CDATA[#[{
+	zipCode: vars.params.zipcode
+}]]]></db:input-parameters>
+				</db:select>
+			</when>
+			<when
+				expression="#[vars.params.longitude != null and vars.params.latitude != null and vars.params.radius != null and vars.params.metric !=null]">
+				<db:select doc:name="Select by geo location" doc:id="d0cccf4e-ec30-439a-b9e9-3541075e1b4a"
+					config-ref="Database_Config">
+					<db:sql>SELECT *,
+						( IF(:metric = 'true', 6371, 3959)
+						* acos(
+						cos(
+						radians( :latitude)
+						)
+						*
+						cos(
+						radians( :latitude)
+						)
+						*
+						cos(
+						radians( :longitude)
+						-
+						radians( :longitude)
+						)
+						+
+						sin(
+						radians( :latitude)
+						)
+						*
+						sin(
+						radians( :latitude)
+						)
+						)
+						) AS distance
+						FROM Store
+						HAVING distance &lt; :radius
+						ORDER BY distance
+						LIMIT 30
+					</db:sql>
+					<db:input-parameters><![CDATA[#[{
+	metric: vars.params.metric,
+	latitude: vars.params.latitude,
+	longitude: vars.params.longitude,
+	radius: vars.params.radius
+}]]]></db:input-parameters>
+				</db:select>
+			</when>
+			<otherwise>
+				<db:select doc:name="Select without criteria" doc:id="f42b41e5-cee1-4501-a9b5-1bc3e96c6a7a"
+					config-ref="Database_Config">
+					<db:sql>SELECT * FROM Store</db:sql>
+				</db:select>
+			</otherwise>
+		</choice>
+		<ee:transform doc:name="Build response"
+			doc:id="158d1085-33ef-44b1-9649-c72c0553d086">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	searchCriteria: {
+	  	latitude: vars.params.latitude as Number,
+		longitude: vars.params.longitude as Number,
+		radius: vars.params.radius as Number,
+		useMetric: vars.params.metric as Boolean
+	},
+	results: payload map ( (store) ->
+		{
+			storeId: store.storeId,
+			name: store.name,
+			description: store.description,
+			notes: store.notes,
+			openingHours: store.openingHours,
+			address: {
+				address: store.addressLine1,
+				city: store.city,
+				postalCode: store.zipCode,
+				state: store.state,
+				country: store.country
+			},
+			contact: {
+				email: store.email,
+				phone: store.phone
+			},
+			geo: {
+				latitude: store.lat,
+				longitude: store.lng
+			},
+			(distance: store.distance) if (store.distance != null),
+			(distanceUnit: if (vars.params.metric == 'true') 'km' else 'mi') if (store.distance != null) 
+			
+		}
+	)
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="productLocator" doc:id="f11d47ba-7ea1-4884-88f9-bc5f63200f7a">
+		<ee:transform doc:name="Create params var"
+			doc:id="8188166a-8409-40d2-9c7c-e661e11d4ca3">
+			<ee:message />
+			<ee:variables>
+				<ee:set-variable variableName="params"><![CDATA[%dw 2.0
+output application/java
+---
+attributes.queryParams]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<choice doc:name="Choice by query parameters" doc:id="77dcd887-6526-4ee7-b36f-c26c7325f49b">
+			<when expression="#[vars.params.zipcode != null]">
+				<db:select doc:name="Select by zip code" doc:id="ad2517f3-42e2-4448-a939-5e78fd06c16d"
+					config-ref="Database_Config">
+					<db:sql>SELECT s.*, sp.availableCount
+						FROM Store as s
+						INNER JOIN Store_Product as sp ON (s.storeId=sp.Store_storeId)
+						INNER JOIN Product as p ON (sp.Product_productId=p.productId AND
+						sp.Product_variantId = p.variantId)
+						WHERE p.productId = :productId
+						AND p.variantId = :variantId
+						AND sp.availableCount &gt;= :quantity
+						AND s.zipCode = :zipCode
+						LIMIT 100</db:sql>
+					<db:input-parameters><![CDATA[#[{
+	zipCode: vars.params.zipcode,
+	quantity: vars.params.quantity,
+	variantId: vars.params.variantId,
+	productId: vars.params.productId
+}]]]></db:input-parameters>
+				</db:select>
+			</when>
+			<when
+				expression="#[vars.params.longitude != null and vars.params.latitude != null and vars.params.radius != null and vars.params.metric !=null]">
+				<db:select doc:name="Select by geo location" doc:id="d0cccf4e-ec30-439a-b9e9-3541075e1b4a"
+					config-ref="Database_Config">
+					<db:sql>SELECT s.*, sp.availableCount,
+						( IF(:metric = 'true', 6371, 3959)
+						* acos(
+						cos(
+						radians(:latitude)
+						)
+						*
+						cos(
+						radians( :latitude )
+						)
+						*
+						cos(
+						radians( :longitude )
+						-
+						radians(:longitude)
+						)
+						+
+						sin(
+						radians(:latitude)
+						)
+						*
+						sin(
+						radians( :latitude )
+						)
+						)
+						) AS distance
+						FROM Store as s
+						INNER JOIN Store_Product as sp ON (s.storeId=sp.Store_storeId)
+						INNER JOIN Product as p ON (sp.Product_productId=p.productId AND
+						sp.Product_variantId=p.variantId)
+						WHERE p.productId = :productId
+						AND p.variantId = :variantId
+						AND sp.availableCount &gt;= :quantity
+						HAVING distance &lt; :radius
+						ORDER BY distance
+						LIMIT 30</db:sql>
+					<db:input-parameters><![CDATA[#[{
+	metric: vars.params.metric,
+	latitude: vars.params.latitude,
+	longitude: vars.params.longitude,
+	radius: vars.params.radius,
+	productId: vars.params.productId,
+	variantId: vars.params.variantId,
+	quantity: vars.params.quantity
+}]]]></db:input-parameters>
+				</db:select>
+			</when>
+			<otherwise>
+				<db:select doc:name="Select without criteria" doc:id="f42b41e5-cee1-4501-a9b5-1bc3e96c6a7a"
+					config-ref="Database_Config">
+					<db:sql>SELECT s.*, sp.availableCount
+						FROM Store as s
+						INNER JOIN Store_Product as sp ON (s.storeId=sp.Store_storeId)
+						INNER JOIN Product as p ON (sp.Product_productId=p.productId AND
+						sp.Product_variantId = p.variantId)
+						WHERE p.productId = :productId
+						AND p.variantId = :variantId
+						AND sp.availableCount &gt;= :quantity
+						LIMIT 100</db:sql>
+					<db:input-parameters><![CDATA[#[{
+	quantity: vars.params.quantity,
+	variantId: vars.params.variantId,
+	productId: vars.params.productId
+}]]]></db:input-parameters>
+				</db:select>
+			</otherwise>
+		</choice>
+		<ee:transform doc:name="Build response"
+			doc:id="158d1085-33ef-44b1-9649-c72c0553d086">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	searchCriteria: {
+		latitude: vars.params.latitude as Number default null,
+		longitude: vars.params.longitude as Number default null,
+		productId: vars.params.productId,
+		productVariant: vars.params.variantId,
+		quantity: vars.params.quantity as Number,
+		radius: vars.params.radius as Number,
+		useMetric: vars.params.metric as Boolean,
+		zipcode: vars.params.zipcode
+	},
+	results: payload map ( (store) ->
+		{
+			quantityInStock: store.availableCount,
+			storeInfo: {
+				storeId: store.storeId,
+				name: store.name,
+				description: store.description,
+				notes: store.notes,
+				openingHours: store.openingHours,
+				address: {
+					address: store.addressLine1,
+					city: store.city,
+					postalCode: store.zipCode,
+					state: store.state,
+					country: store.country
+				},
+				contact: {
+					email: store.email,
+					phone: store.phone
+				},
+				geo: {
+					latitude: store.lat,
+					longitude: store.lng
+				},
+				(distance: store.distance) if (store.distance != null),
+				(distanceUnit: if (vars.params.metric == 'true') 'km' else 'mi') if (store.distance != null) 
+			}
+		}
+	)
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="createReservation" doc:id="288bda79-735c-474f-994f-e78c9632748a">
+		<db:insert doc:name="Insert reservation to DB" doc:id="2f1044ae-19b2-4723-a0ba-51b02ebfde9a"
+			config-ref="Database_Config">
+			<db:sql>INSERT INTO Reservation
+				(
+				reservationId,
+				customerId,
+				createdAt,
+				updatedAt,
+				quantity,
+				Store_storeId,
+				Product_productId,
+				Product_variantId
+				)
+				VALUES
+				(
+				:reservationId,
+				:customerId,
+				CURRENT_TIMESTAMP,
+				CURRENT_TIMESTAMP,
+				:quantity,
+				:storeId,
+				:productId,
+				:variantId
+				)</db:sql>
+			<db:input-parameters><![CDATA[#[{
+	reservationId: uuid(),
+	productId: payload.productId,
+	variantId: payload.variantId,
+	customerId: payload.customerId,
+	storeId: payload.storeId,
+	quantity: payload.quantity
+}]]]></db:input-parameters>
+		</db:insert>
+		<ee:transform doc:name="Build response"
+			doc:id="de0db0c8-3fb0-4326-9c02-c25ed01ee3f0">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	message: "Reservation has been created"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>
