@@ -1,35 +1,3 @@
 {
-  "configs": [
-    "implementation.xml",
-    "config.xml",
-    "retail_locations_system_api.xml"
-  ],
-  "secureProperties": [],
-  "redeploymentEnabled": true,
-  "name": "template-retail-locations-system-api",
-  "minMuleVersion": "4.1.1",
-  "requiredProduct": "MULE_EE",
-  "classLoaderModelLoaderDescriptor": {
-    "id": "mule",
-    "attributes": {
-      "exportedResources": [
-        "api/.gitignore",
-        "api/examples/create-store-request.raml",
-        "api/examples/item-search-response.raml",
-        "api/examples/product-reserve-request.raml",
-        "api/examples/reservation-response.raml",
-        "api/examples/store-response.raml",
-        "api/examples/store-search-response.raml",
-        "api/exchange_modules/47f07e0a-f578-47d4-9591-d9e7afffb0fc.retail/retail_common/1.0.8/retail_common.raml",
-        "api/exchange_modules/47f07e0a-f578-47d4-9591-d9e7afffb0fc.retail/retail_geosearch/1.0.1/retail_geosearch.raml",
-        "api/exchange_modules/47f07e0a-f578-47d4-9591-d9e7afffb0fc.retail/retail_store/1.0.4/retail_store.raml",
-        "api/retail_locations_system_api.raml",
-        "api/traits/productSearch.raml"
-      ]
-    }
-  },
-  "bundleDescriptorLoader": {
-    "id": "mule",
-    "attributes": {}
-  }
+  "minMuleVersion": "4.1.4"
 }
