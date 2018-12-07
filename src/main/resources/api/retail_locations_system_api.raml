@@ -1,14 +1,14 @@
 #%RAML 1.0
-title: Retail Locations System API
+baseUri: https://mocksvc.mulesoft.com/mocks/e11ce162-c74a-474f-8d3c-92b0eec1e5b4/api # 
 version: v2.0
-baseUri: http://localhost:8081/api
+title: Retail Locations System API
 
 uses: 
-  common: exchange_modules/47f07e0a-f578-47d4-9591-d9e7afffb0fc.retail/retail_common/1.0.8/retail_common.raml
-  store: exchange_modules/47f07e0a-f578-47d4-9591-d9e7afffb0fc.retail/retail_store/1.0.4/retail_store.raml
+  common: /exchange_modules/org.mule.templates/retail-common/1.0.0/retail_common.raml
+  store: /exchange_modules/org.mule.templates/retail-store/1.0.0/retail_store.raml
   
 traits: 
-  geoSearch: !include exchange_modules/47f07e0a-f578-47d4-9591-d9e7afffb0fc.retail/retail_geosearch/1.0.1/retail_geosearch.raml
+  geoSearch: !include /exchange_modules/org.mule.templates/retail-geosearch/1.0.0/retail_geosearch.raml
   productSearch: !include traits/productSearch.raml
       
 types:
