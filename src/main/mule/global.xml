@@ -9,6 +9,8 @@ http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/m
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd 
 http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd">
 
+	<global-property doc:name="Global Property" doc:id="998f8b57-351c-48d1-aa77-e531da421d68" name="mule.env" value="dev" />
+	
 	<db:config name="Database_Config" doc:name="Database Config"
 		doc:id="6e89dec2-95e1-4ee2-a6c1-d722c45f3d20">
 		<db:my-sql-connection host="${db.host}" port="${db.port}"
@@ -24,8 +26,6 @@ http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/cu
 		raml="retail_locations_system_api.raml" outboundHeadersMapName="outboundHeaders"
 		httpStatusVarName="httpStatus" />
 
-	<configuration-properties doc:name="Configuration properties"
-		doc:id="ffcc2fa6-c3ff-4b06-a8c9-8af3205b5254" file="mule-artifact.properties" />
 	<configuration-properties doc:name="Configuration properties"
 		doc:id="ffcc2fa6-c3ff-4b06-a8c9-8af3205b5254" file="common.properties" />
 	<configuration-properties doc:name="Configuration properties"

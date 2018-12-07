@@ -1,14 +1,14 @@
 #%RAML 1.0
-baseUri: https://mocksvc.mulesoft.com/mocks/e11ce162-c74a-474f-8d3c-92b0eec1e5b4/api # 
-version: v2.0
 title: Retail Locations System API
+version: v2.0
+baseUri: http://localhost:8081/api
 
 uses: 
-  common: /exchange_modules/47f07e0a-f578-47d4-9591-d9e7afffb0fc.retail/retail_common/1.0.8/retail_common.raml
+  common: exchange_modules/47f07e0a-f578-47d4-9591-d9e7afffb0fc.retail/retail_common/1.0.8/retail_common.raml
   store: exchange_modules/47f07e0a-f578-47d4-9591-d9e7afffb0fc.retail/retail_store/1.0.4/retail_store.raml
   
 traits: 
-  geoSearch: !include /exchange_modules/47f07e0a-f578-47d4-9591-d9e7afffb0fc.retail/retail_geosearch/1.0.1/retail_geosearch.raml
+  geoSearch: !include exchange_modules/47f07e0a-f578-47d4-9591-d9e7afffb0fc.retail/retail_geosearch/1.0.1/retail_geosearch.raml
   productSearch: !include traits/productSearch.raml
       
 types:
@@ -60,6 +60,7 @@ types:
 
 /stores:
   get:
+    displayName: Retrieve stores
     is: [ geoSearch ]
     queryParameters: 
       zip: 
@@ -73,6 +74,7 @@ types:
             type: StoreSearchResponse
             example: !include examples/store-search-response.raml
   post:
+    displayName: Create new store
     description: creates new store
     body: 
       application/json:
@@ -88,6 +90,7 @@ types:
   
   /{storeId}:
     get:
+      displayName: Retrieve specific store
       description: |
         Retrieve info about particular store (address, name, etc.)
       responses: 
@@ -98,6 +101,7 @@ types:
               example: !include examples/store-response.raml
               
     put:
+      displayName: Update store
       description: | 
         Updates information about particular store (address, name, etc)
       body: 
@@ -114,6 +118,7 @@ types:
 
 /productLocator:
   get:
+    displayName: Locate stores with product
     description: |
       Searches for a product identified by productId and variantId. If quantity is provided as search parameter, only stores that have required number of items in stock are included in the response. Filtering by location coordinates and maximum radius can be used to further filter the search results.
     is: [ geoSearch, productSearch ]
@@ -131,6 +136,7 @@ types:
    
 /reservation:
     post:
+      displayName: Reserve product in store
       description: reservation of product in store
       body: 
         application/json:
