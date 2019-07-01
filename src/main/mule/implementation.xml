@@ -301,8 +301,8 @@ output application/json
 ---
 {
 	searchCriteria: {
-	  	latitude: vars.params.latitude as Number,
-		longitude: vars.params.longitude as Number,
+	  	latitude: if(vars.params.latitude != null) vars.params.latitude as Number else null,
+		longitude: if(vars.params.longitude != null) vars.params.longitude as Number else null,
 		radius: vars.params.radius as Number,
 		useMetric: vars.params.metric as Boolean
 	},
