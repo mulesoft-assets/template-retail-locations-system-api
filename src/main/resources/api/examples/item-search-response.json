@@ -1,14 +1,17 @@
-#%RAML 1.0 NamedExample
-value: |
-  {
-    "searchCriteria": {
-      "latitude": 37.7875925,
-      "longitude": -122.404736,
-      "radius": 10,
-      "useMetric": true
-    },
-    "results": [
-      {
+{
+  "searchCriteria": {
+    "productId": "e1c515f9-102d-4830-b353-18fe48065732",
+    "variantId": "8cd5efc1-9110-4ee1-9ffd-1eaec687c0cc",
+    "latitude": 37.7875925,
+    "longitude": -122.404736,
+    "radius": 10,
+    "useMetric": true,
+    "zipcode": null
+  },
+  "results": [
+    {
+      "quantityInStock" : 55,
+      "storeInfo": {
         "storeId": "1c9a20dc-c585-42fd-ac1a-1216085b76d2",
         "name": "Anypoint Store 1",
         "description": "Department store chain providing brand-name c",
@@ -31,8 +34,11 @@ value: |
         },
         "distance": 0.12951756569805717,
         "distanceUnit": "km"
-      },
-      {
+      }
+    },
+    {
+      "quantityInStock": 66,
+      "storeInfo" : {
         "storeId": "47dc46d1-9a2a-4ca1-8063-22aab7ddcd45",
         "name": "Anypoint Store 2",
         "description": "Department store chain providing brand-name c",
@@ -56,5 +62,6 @@ value: |
         "distance": 9.077742316846548,
         "distanceUnit": "km"
       }
-    ]
-  }
+    }
+  ]
+}

@@ -4,11 +4,11 @@ version: v2.0
 baseUri: http://localhost:8081/api
 
 uses: 
-  common: /exchange_modules/org.mule.templates/retail-common/1.0.0/retail_common.raml
-  store: /exchange_modules/org.mule.templates/retail-store/1.0.0/retail_store.raml
+  common: exchange_modules/47f07e0a-f578-47d4-9591-d9e7afffb0fc.retail/retail_common/1.0.10/retail_common.raml
+  store: exchange_modules/47f07e0a-f578-47d4-9591-d9e7afffb0fc.retail/retail_store/1.0.6/retail_store.raml
   
 traits: 
-  geoSearch: !include /exchange_modules/org.mule.templates/retail-geosearch/1.0.0/retail_geosearch.raml
+  geoSearch: !include exchange_modules/47f07e0a-f578-47d4-9591-d9e7afffb0fc.retail/retail_geosearch/1.0.1/retail_geosearch.raml
   productSearch: !include traits/productSearch.raml
       
 types:
@@ -30,7 +30,7 @@ types:
       radius: integer
       useMetric: boolean
       maxResults?: integer
-      zipcode?: string?
+      zipcode?: string | nil
       
   StoreSearchResponse:
     type: object
@@ -72,21 +72,21 @@ types:
         body:
           application/json:
             type: StoreSearchResponse
-            example: !include examples/store-search-response.raml
+            example: !include examples/store-search-response.json
   post:
     displayName: Create new store
     description: creates new store
     body: 
       application/json:
         type: store.StoreInfo
-        example: !include ./examples/create-store-request.raml
+        example: !include examples/create-store-request.json
     responses: 
       201:
         headers: 
           Location:
         body: 
           application/json:
-            example: !include examples/store-response.raml
+            example: !include examples/store-response.json
   
   /{storeId}:
     get:
@@ -98,7 +98,7 @@ types:
           body: 
             application/json:
               type: store.StoreInfo
-              example: !include examples/store-response.raml
+              example: !include examples/store-response.json
               
     put:
       displayName: Update store
@@ -107,13 +107,13 @@ types:
       body: 
         application/json:
           type: store.StoreInfo
-          example: !include examples/store-response.raml
+          example: !include examples/store-response.json
       responses: 
         200:
           body: 
             application/json:
               type: store.StoreInfo
-              example: !include examples/store-response.raml
+              example: !include examples/store-response.json
       
 
 /productLocator:
@@ -132,7 +132,7 @@ types:
         body: 
           application/json:
             type: ItemAvailabilityResponse
-            example: !include examples/item-search-response.raml
+            example: !include examples/item-search-response.json
    
 /reservation:
     post:
@@ -141,9 +141,9 @@ types:
       body: 
         application/json:
           type: Reservation
-          example: !include examples/product-reserve-request.raml
+          example: !include examples/product-reserve-request.json
       responses: 
         201: 
           body: 
             application/json: 
-              example: !include ./examples/reservation-response.raml
+              example: !include examples/reservation-response.json
