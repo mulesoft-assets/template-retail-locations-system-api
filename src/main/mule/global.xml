@@ -23,7 +23,7 @@ http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/cu
 	</http:listener-config>
 
 	<apikit:config name="retail_locations_system_api-config"
-		raml="retail_locations_system_api.raml" outboundHeadersMapName="outboundHeaders"
+		api="api/retail_locations_system_api.raml" outboundHeadersMapName="outboundHeaders"
 		httpStatusVarName="httpStatus" />
 
 	<configuration-properties doc:name="Configuration properties"
