@@ -4,11 +4,11 @@ version: v2.0
 baseUri: http://localhost:8081/api
 
 uses: 
-  common: exchange_modules/47f07e0a-f578-47d4-9591-d9e7afffb0fc.retail/retail_common/1.0.10/retail_common.raml
-  store: exchange_modules/47f07e0a-f578-47d4-9591-d9e7afffb0fc.retail/retail_store/1.0.6/retail_store.raml
+  common: /exchange_modules/org.mule.templates/retail-common/1.0.1/retail_common.raml
+  store: /exchange_modules/org.mule.templates/retail-store/1.0.1/retail_store.raml
   
 traits: 
-  geoSearch: !include exchange_modules/47f07e0a-f578-47d4-9591-d9e7afffb0fc.retail/retail_geosearch/1.0.1/retail_geosearch.raml
+  geoSearch: !include /exchange_modules/org.mule.templates/retail-geosearch/1.0.0/retail_geosearch.raml
   productSearch: !include traits/productSearch.raml
       
 types:
@@ -57,10 +57,14 @@ types:
       storeId: string
       deliveryMethod?: string
 
+  MessageResponse:
+    type: object
+    properties:
+      message: string
 
 /stores:
   get:
-    displayName: Retrieve stores
+    displayName: Get stores
     is: [ geoSearch ]
     queryParameters: 
       zip: 
@@ -72,25 +76,26 @@ types:
         body:
           application/json:
             type: StoreSearchResponse
-            example: !include examples/store-search-response.json
+            example: !include examples/store-search-response.yaml
   post:
-    displayName: Create new store
-    description: creates new store
+    displayName: Create store
+    description: Creates new store
     body: 
       application/json:
         type: store.StoreInfo
-        example: !include examples/create-store-request.json
+        example: !include examples/create-store-request.yaml
     responses: 
       201:
         headers: 
           Location:
         body: 
           application/json:
-            example: !include examples/store-response.json
+            type: store.StoreInfo
+            example: !include examples/store-response.yaml
   
   /{storeId}:
     get:
-      displayName: Retrieve specific store
+      displayName: Get store
       description: |
         Retrieve info about particular store (address, name, etc.)
       responses: 
@@ -98,7 +103,7 @@ types:
           body: 
             application/json:
               type: store.StoreInfo
-              example: !include examples/store-response.json
+              example: !include examples/store-response.yaml
               
     put:
       displayName: Update store
@@ -107,13 +112,13 @@ types:
       body: 
         application/json:
           type: store.StoreInfo
-          example: !include examples/store-response.json
+          example: !include examples/store-response.yaml
       responses: 
         200:
           body: 
             application/json:
               type: store.StoreInfo
-              example: !include examples/store-response.json
+              example: !include examples/store-response.yaml
       
 
 /productLocator:
@@ -132,18 +137,19 @@ types:
         body: 
           application/json:
             type: ItemAvailabilityResponse
-            example: !include examples/item-search-response.json
+            example: !include examples/item-search-response.yaml
    
 /reservation:
     post:
-      displayName: Reserve product in store
-      description: reservation of product in store
+      displayName: Create reservation
+      description: Reservation of product in store
       body: 
         application/json:
           type: Reservation
-          example: !include examples/product-reserve-request.json
+          example: !include examples/product-reserve-request.yaml
       responses: 
         201: 
           body: 
             application/json: 
-              example: !include examples/reservation-response.json
+              type: MessageResponse
+              example: !include examples/reservation-response.yaml

@@ -11,19 +11,11 @@ types:
 
   ResourceId:
     type: string
-   # pattern: ^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$
     description: |
       the unique object identifier exposed to external clients of a service.
       this is a synthetic key and should NEVER be equal to any internal property
       or key of the object. it is recommended that these values follow
       the format specified in RFC 4122 [https://www.ietf.org/rfc/rfc4122.txt].
-
-  # Identified:
-  #   type: object
-  #   description: |
-  #     abstract object with unique identifier
-  #   properties:
-  #     identifier: resourceId
 
   Lifetime:
     type: object
@@ -157,8 +149,6 @@ types:
           the two character ISO 3166 country code
           [http://www.iso.org/iso/home/standards/country_codes.htm]
         default: US
-#        minLength: 2
-#        maxLength: 2
 
   Link:
     type: object
